@@ -1,20 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { TaskProvider } from './src/context/TaskContext';
+import { PaperProvider } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native';
+import { loadTasksFromStorage } from './src/utils/storage';
+import { Task } from './src/models/Task';
 
 export default function App() {
+  const [initialTasks, setInitialTasks] = useState<Task[] | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedTasks = await loadTasksFromStorage();
+        console.log('Loaded tasks:', savedTasks);
+        setInitialTasks(savedTasks);
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+      }
+    })();
+  }, []);
+
+  if (initialTasks === null) {
+    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <TaskProvider initialTasks={initialTasks}>
+        <PaperProvider>
+          <AppNavigator />
+        </PaperProvider>
+      </TaskProvider>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
